@@ -80,6 +80,7 @@ renderRecord();
 </script></main>
 <script>
 /* MENOVA SHOWCASE MODE: role switching and illustrative local data; no accounts or credentials. */
+const oldSignOut=$('sessionSignOut');const cleanSignOut=oldSignOut.cloneNode(true);oldSignOut.replaceWith(cleanSignOut);
 $('authGate').innerHTML = '<h2>Welcome to MENOVA</h2><p class="muted">Choose a workspace to explore the MENOVA experience.</p><div class="grid"><button class="btn primary" id="enterPersonal" type="button">Personal</button><button class="btn" id="enterDoctor" type="button">Doctor</button></div><p class="small muted">Demonstration prototype · No account or password required.</p>';
 $('sessionSignOut').classList.add('hide');
 $('enterPersonal').addEventListener('click',()=>enterShowcase('personal'));
