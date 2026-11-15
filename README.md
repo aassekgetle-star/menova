@@ -1,21 +1,20 @@
-# MENOVA — Male Reproductive Health Prototype
+# MENOVA — Public Demonstration
 
-A browser-based proof of concept for the Future Health Digital Innovation Challenge.
+MENOVA is a concept for helping men organise male reproductive health concerns, understand when professional assessment may be appropriate, and control what information they share with a healthcare professional.
 
-## Run locally
-Open `index.html` in a modern browser. No build step or package installation is required.
+## Public demo
+The root `index.html` is a static, presentation-only demonstration. It contains:
+- The proposed patient journey
+- Fictional scenarios illustrating navigation principles
+- Safety, consent and privacy-by-design principles
 
-## Demo walkthrough
-1. **Reproductive assessment** — structured intake with transparent, illustrative rule-based signals and suggested routes.
-2. **Scenario lab** — five fictional cases, including an urgent red-flag example.
-3. **Private diary** — add fictional text entries and view the timeline. Voice dictation depends on browser support.
-4. **Consent & sharing** — select the exact information to include, preview it and explicitly approve a demo handover.
-5. **Clinician view** — displays the approved preview in the same browser.
+## Important limitations
+This public page does not provide accounts, intake forms, diary storage, AI inference, clinical rules, diagnosis, test interpretation, referrals, teleconsultations or patient records. It does not collect or transmit information. All examples are synthetic.
 
-## Safety and limitations
-This is not a diagnostic tool, validated risk score or trained AI system. It does not diagnose infertility, infer fertility status or interpret semen/hormone tests. Sudden severe testicular pain requires immediate in-person emergency assessment; do not delay care for an app.
+MENOVA is not a medical device or clinical service. It does not diagnose infertility or calculate a validated risk score. Sudden severe testicular pain requires immediate emergency assessment.
 
-All examples are synthetic. Diary entries use browser localStorage. There is no production authentication, encryption, server-side consent enforcement, secure transfer, verified clinician directory, live referral or teleconsultation. The consent workflow is a local demonstration only. Never enter real patient data.
+## Development
+This repository is public. Do not commit credentials, API keys, confidential material or real patient information. The public page is intentionally limited to a concept demonstration. Any functionality executed in a public browser should be treated as visible to visitors.
 
 ## Hosting
-The project is static HTML/CSS/JavaScript and can be hosted on GitHub Pages at no cost within GitHub's applicable plan limits. No paid domain, database, API or subscription is needed for this prototype.
+A GitHub Actions workflow in `.github/workflows/pages.yml` is configured to publish the repository root to GitHub Pages after Pages is configured to use **GitHub Actions** under Settings → Pages.
