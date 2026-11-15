@@ -1,20 +1,34 @@
-# MENOVA — Public Demonstration
+# MENOVA — Interactive Competition Prototype
 
-MENOVA is a concept for helping men organise male reproductive health concerns, understand when professional assessment may be appropriate, and control what information they share with a healthcare professional.
+MENOVA is a privacy-first concept focused on earlier support for male reproductive health concerns.
 
-## Public demo
-The root `index.html` is a static, presentation-only demonstration. It contains:
-- The proposed patient journey
-- Fictional scenarios illustrating navigation principles
-- Safety, consent and privacy-by-design principles
+## Live demonstration
+The root `index.html` is an interactive, mobile-responsive front-end prototype. It demonstrates:
+1. Guided reproductive health intake with transparent explanations and suggested next steps.
+2. A private diary with simple keyword-based topic organisation.
+3. Five synthetic scenarios, including an urgent testicular-pain safety scenario.
+4. A patient health record assembled from demo assessment and diary entries.
+5. A consent checkpoint where the user selects information, previews it and explicitly approves a simulated handover.
+6. A simulated doctor portal that displays only approved demo handovers.
 
-## Important limitations
-This public page does not provide accounts, intake forms, diary storage, AI inference, clinical rules, diagnosis, test interpretation, referrals, teleconsultations or patient records. It does not collect or transmit information. All examples are synthetic.
+## How to demonstrate
+Open the site and:
+- Run the assessment with the “Trying to conceive” reason, select “Yes” and “More than 12 months”, then organise the assessment.
+- Open Scenario lab and run the urgent testicular-pain case.
+- Add a fictional diary entry and inspect My health record.
+- Open Consent & handover, preview the selected information, tick explicit approval, and approve.
+- Open Doctor portal to inspect the approved simulated handover.
 
-MENOVA is not a medical device or clinical service. It does not diagnose infertility or calculate a validated risk score. Sudden severe testicular pain requires immediate emergency assessment.
+## Safety, privacy and technical limitations
+- All examples are synthetic. Never enter real patient or patient-identifiable information.
+- Assessment and diary organisation use simple deterministic rules and keyword matching, not trained AI or a validated clinical risk model.
+- MENOVA does not diagnose infertility, interpret laboratory tests, prescribe treatment or replace a healthcare professional.
+- Sudden severe testicular pain requires immediate emergency assessment; do not wait for an app.
+- Data is stored in the browser's localStorage. This is a demonstration convenience, not secure clinical storage.
+- Doctor profiles and handovers are simulated. No real clinician directory, authentication, server-side consent enforcement, encrypted data transfer, referrals, teleconsultations or backend are connected.
+- The approval flow demonstrates user choice only; it does not transmit information to a clinician.
 
-## Development
-This repository is public. Do not commit credentials, API keys, confidential material or real patient information. The public page is intentionally limited to a concept demonstration. Any functionality executed in a public browser should be treated as visible to visitors.
+## Run locally
+Open `index.html` in a modern browser. No build step, paid API, database, domain or subscription is required.
 
-## Hosting
-A GitHub Actions workflow in `.github/workflows/pages.yml` is configured to publish the repository root to GitHub Pages after Pages is configured to use **GitHub Actions** under Settings → Pages.
+This repository is public. Do not commit credentials, confidential material or real patient information.
