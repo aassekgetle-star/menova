@@ -170,4 +170,50 @@ function startVoiceInput(){
  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;if(!SR){toast('Voice input is not supported in this browser. You can type your question.');return}
  const rec=new SR();rec.lang='en';rec.onresult=e=>{$('aiQuestion').value=e.results[0][0].transcript};rec.onerror=()=>toast('Could not capture speech. Please try again.');rec.start();toast('Listening… speak your question');
 }
-</script></body></html>
+</script>
+<script>
+/* Final showcase interaction pass: readable clinician summary and shared same-browser thread. */
+function enterShowcase(role){
+ currentRole=role;currentUser={id:'showcase-'+role};doctorProfile=role==='doctor'?{display_name:'Dr. Alex Morgan',specialty:'Reproductive health',verification_status:'verified'}:null;
+ $('authGate').classList.add('hide');$('appLayout').classList.remove('hide');$('sessionSignOut').classList.remove('hide');
+ document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('hide',role==='personal'?b.dataset.page==='doctor':b.dataset.page!=='doctor'));
+ if(role==='personal'){go('home');loadClinicianDirectory();renderRecord();renderMemberMessages();updateDiaryInsights();}
+ else{ensureDemoHandover();go('doctor');renderDoctor();}
+}
+function ensureDemoHandover(){
+ if(!handovers.length){
+  handovers.push({approved:'15 November 2026 · Demonstration request',preview:{assessment:{reason:'planning',duration:'Less than 3 months',trying:'yes',history:['Testicular injury, surgery or undescended testis'],notes:'It’s been difficult and I am worried about fertility.'},entries:[{text:'Been trying to have a baby for days and nothing has happened.',date:'15 Nov 2026'},{text:'I am concerned about my sperm health and would like advice.',date:'15 Nov 2026'}],history:['Testicular injury, surgery or undescended testis'],message:'I would like to speak with a reproductive-health professional.'},messages:[]});
+  persist();
+ }
+}
+function niceReason(v){return ({planning:'Planning for future fertility',trying:'Trying to conceive',sexual:'Sexual health or function',pain:'Testicular pain or swelling',other:'Other reproductive-health concern'})[v]||v||'Reproductive-health consultation';}
+function renderDoctor(){
+ ensureDemoHandover();
+ $('doctorStatus').innerHTML='<div class="row"><div><b>Dr. Alex Morgan</b><p class="small muted">Reproductive health · Clinician workspace</p></div><span class="pill">Available</span></div><p>Review the member’s request below. You can introduce yourself, ask follow-up questions and continue the conversation directly.</p>';
+ $('doctorInbox').innerHTML='<h3>Requests to connect</h3>'+handovers.map((x,n)=>{
+  const p=x.preview||{},a=p.assessment||{},entries=p.entries||[],history=p.history||a.history||[],messages=x.messages||[];
+  return '<article class="panel" style="border-left:4px solid var(--teal)"><div class="row" style="justify-content:space-between"><div><div class="eyebrow">MEMBER REQUEST</div><h2 style="margin:4px 0">Reproductive health consultation</h2><div class="small muted">Received '+esc(x.approved||'Today')+'</div></div><span class="pill">'+(messages.length?'Conversation started':'Awaiting your response')+'</span></div><div class="grid"><div class="card"><div class="small muted">PRIMARY CONCERN</div><b>'+esc(niceReason(a.reason||p.concern))+'</b></div><div class="card"><div class="small muted">TRYING TO CONCEIVE</div><b>'+esc(a.trying==='yes'?'Yes':a.trying==='no'?'No':'Not stated')+'</b></div><div class="card"><div class="small muted">TIMEFRAME</div><b>'+esc(a.duration||'Not stated')+'</b></div><div class="card"><div class="small muted">REQUEST STATUS</div><b>'+(messages.length?'In conversation':'New request')+'</b></div></div><h3>Message from the member</h3><div class="result">'+esc(a.notes||p.message||'The member would like to discuss their reproductive-health concerns.')+'</div><h3>Relevant medical history</h3>'+(history.length?'<ul>'+history.map(v=>'<li>'+esc(v)+'</li>').join('')+'</ul>':'<p class="muted">No relevant history was shared.</p>')+'<h3>Diary observations shared</h3>'+(entries.length?entries.map(e=>'<div class="result"><p style="margin:0">'+esc(e.text)+'</p><div class="small muted">'+esc(e.date||'')+'</div></div>').join(''):'<p class="muted">No diary entries were included.</p>')+'<h3>Conversation with member</h3><div class="result" id="doctorThread'+n+'">'+(messages.length?messages.map(m=>'<div style="padding:9px 0;border-bottom:1px solid var(--line)"><b>'+(m.from==='doctor'?'Dr. Alex Morgan':'Member')+'</b><p style="margin:4px 0">'+esc(m.text)+'</p><span class="small muted">'+esc(m.time)+'</span></div>').join(''):'<p class="muted">No messages yet. Send a personal introduction to begin.</p>')+'</div><div class="field"><label>Write a message to the member</label><textarea id="doctorReply'+n+'" placeholder="Hello, thank you for reaching out to MENOVA. I have reviewed the concerns you shared…"></textarea></div><button class="btn primary" onclick="sendDoctorMessage('+n+')">Send to member</button></article>';
+ }).join('');
+}
+function sendDoctorMessage(index){
+ const field=$('doctorReply'+index),msg=field?.value.trim();if(!msg){toast('Write a message before sending.');return}
+ ensureDemoHandover();if(!handovers[index]){toast('This member request is no longer available.');return}
+ handovers[index].messages=handovers[index].messages||[];handovers[index].messages.push({from:'doctor',text:msg,time:new Date().toLocaleString()});persist();renderDoctor();renderMemberMessages();toast('Message delivered to the Personal workspace.');
+}
+function renderMemberMessages(){
+ const host=$('memberMessages');if(!host)return;
+ if(!handovers.length){host.innerHTML='<p>No clinician conversation yet. Submit a handover request to begin.</p>';return}
+ host.innerHTML=handovers.map((x,i)=>'<div class="panel"><div class="row" style="justify-content:space-between"><div><b>Dr. Alex Morgan</b><div class="small muted">Reproductive health</div></div><span class="pill">Handover conversation</span></div><div class="result">'+((x.messages||[]).length?x.messages.map(m=>'<div style="padding:10px 0;border-bottom:1px solid var(--line)"><b>'+(m.from==='doctor'?'Dr. Alex Morgan':'You')+'</b><p style="margin:4px 0">'+esc(m.text)+'</p><span class="small muted">'+esc(m.time)+'</span></div>').join(''):'<p class="muted">Your request is ready. The clinician can introduce themselves here.</p>')+'</div><div class="field"><label>Reply to your clinician</label><textarea id="memberReply'+i+'" placeholder="Write your reply…"></textarea></div><button class="btn primary" onclick="sendMemberMessage('+i+')">Send reply</button></div>').join('');
+}
+function sendMemberMessage(index=0){
+ const field=$('memberReply'+index),msg=field?.value.trim();if(!msg){toast('Write a reply before sending.');return}
+ if(!handovers[index]){toast('Submit a handover before replying.');return}
+ handovers[index].messages=handovers[index].messages||[];handovers[index].messages.push({from:'member',text:msg,time:new Date().toLocaleString()});persist();renderMemberMessages();renderDoctor();toast('Reply delivered to the Doctor workspace.');
+}
+function approveShare(){
+ if(!preview){toast('Preview the handover first.');return}if(!$('consent').checked){toast('Please confirm that you approve sharing this summary.');return}
+ handovers.unshift({preview:preview,approved:new Date().toLocaleString(),messages:[]});persist();renderDoctor();renderMemberMessages();
+ $('shareStatus').innerHTML='<div class="result"><b>Handover request sent.</b><p>Your selected health summary is now available in the Doctor workspace. You can continue the conversation here.</p></div>';toast('Handover request added to the Doctor workspace.');
+}
+</script>
+</body></html>
