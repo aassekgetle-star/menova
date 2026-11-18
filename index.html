@@ -111,7 +111,7 @@ async function startApp(user){
   if(de){await sb.auth.signOut();currentUser=null;return authMessage(de.message,true)}
   if(!dp&&user.user_metadata?.account_type==='doctor'){const md=user.user_metadata;const created=await sb.from('clinician_profiles').insert({user_id:user.id,display_name:md.display_name||'New professional',specialty:md.specialty||null,registration_reference:md.registration_reference||null,verification_status:'self_reported'}).select().single();dp=created.data;de=created.error}
   if(de||!dp){await sb.auth.signOut();currentUser=null;return authMessage('This account is not registered as a doctor. Choose Personal or create a Doctor account.',true)}
-  currentRole='doctor';doctorProfile=dp;$('authGate').classList.add('hide');$('appLayout').classList.remove('hide');document.querySelectorAll('.nav button').forEach(b=>b.classList.add('hide'));document.querySelector('[data-page="doctor"]').classList.remove('hide');go('doctor');await renderDoctor();return;
+  currentRole='doctor';doctorProfile=dp;window.location.assign('./enhanced/#clinician');return;
  }
  const {data:cp}=await sb.from('clinician_profiles').select('user_id').eq('user_id',user.id).maybeSingle();
  if(cp){await sb.auth.signOut();currentUser=null;return authMessage('This account is registered as a doctor. Choose Doctor to sign in.',true)}
