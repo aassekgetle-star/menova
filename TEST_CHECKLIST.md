@@ -1,26 +1,26 @@
 # MENOVA test checklist
 
-## Static / data checks
-- [ ] JavaScript syntax check for root and enhanced pages.
-- [ ] Desktop and mobile layout, including narrow-screen forms.
-- [ ] Sign in with an existing MENOVA account; signed-out users cannot access the enhanced data view.
-- [ ] Lifestyle check-in validates dates and numeric bounds; all additional lifestyle fields persist.
-- [ ] Biomarker record persists specimen, result, unit, lab interval and lab identity exactly as entered.
-- [ ] Existing lab record form still saves.
-- [ ] Consultation and referral requests save as simulated drafts and explicitly state no provider is contacted.
-- [ ] Timeline sorts entries chronologically.
-- [ ] Biomarker history groups only matching parameter/unit labels and does not infer normality or causation.
-- [ ] JSON export contains lifestyle, biomarker, lab and care-request records.
-- [ ] Individual and bulk deletion remove only the signed-in member's records.
-- [ ] Two-account RLS isolation test: account A cannot read, update or delete account B's rows.
-- [ ] Sign-out immediately hides member records.
+## Static / schema checks
+- [x] Inline JavaScript syntax check for root and enhanced pages after the latest updates.
+- [x] New biomarker, consultation, referral, AI-summary and care-message tables created.
+- [x] RLS policies and authenticated grants checked on new tables.
+- [x] Private report bucket exists, is non-public, and limits PDF/JPG/PNG to 10 MB.
+- [x] Storage policies scope uploads, reads and deletes to the authenticated member folder.
+- [ ] Two-account RLS isolation test using separate real member accounts.
+- [ ] End-to-end browser sign-in, create/read/update/delete test on Android and desktop.
+- [ ] Test a real report upload, signed URL access and deletion.
+- [ ] Test verified clinician assignment, accept/decline, referral status and two-way message exchange.
+- [ ] Confirm unverified clinician cannot see member requests or messages.
 
-## Clinical / product safety
-- [ ] Sudden severe testicular pain route in the main prototype directs immediately to emergency care.
-- [ ] No diagnosis, fertility prediction, unvalidated risk score or normal/abnormal lab classification.
-- [ ] AI endpoint remains disabled until provider credentials, safety evaluation and clinical review are completed.
-- [ ] Consultation and referral flows are clearly marked demo-only until provider network and scheduling integrations are operational.
-- [ ] Secure biomarker report upload is not advertised as available.
+## Product safety
+- [x] No paid model, API key, public meeting provider or paid messaging provider added.
+- [x] Local summary is explicitly described as rule-based, not generative AI.
+- [x] No diagnosis, fertility prediction, unvalidated risk score or lab normal/abnormal classification.
+- [x] Consultation/referral access is limited to assigned verified clinician accounts.
+- [ ] Independent security/privacy review and clinical governance before real patient data.
+- [ ] Enable Supabase leaked-password protection before any pilot.
+- [ ] Add malware scanning and retention policy before real report uploads.
+- [ ] Secure live video/phone provider remains out of scope for a zero-cost prototype.
 
-## Test evidence status
-The enhanced page JavaScript syntax was checked after this update. Database migration application and schema/policy checks are performed separately. Browser interaction, real member-session CRUD, two-account isolation, mobile-device testing, clinical validation, AI evaluation, teleconsultation and referral delivery have not been demonstrated by this checklist. Synthetic data only.
+## Evidence status
+The code's inline JavaScript syntax passed. Supabase schema, RLS policy presence, authenticated grants and private bucket configuration were checked. No test records were created and no actual member session was available, so end-to-end browser CRUD, cross-account isolation, real file upload and two-way clinician messaging are not yet verified. Use synthetic data only.
