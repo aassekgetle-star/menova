@@ -1,1 +1,121 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MENOVA Health Timeline</title><style>body{margin:0;background:#101b24;color:#edf5f4;font:15px system-ui}.wrap{max-width:950px;margin:auto;padding:20px}.panel{background:#192a34;border:1px solid #304650;border-radius:12px;padding:16px;margin:12px 0}button,a{padding:10px;border-radius:8px;background:#213943;color:white;border:1px solid #41665f}input,select,textarea{display:block;width:100%;box-sizing:border-box;padding:10px;margin:5px 0 12px;background:#0d1921;color:white;border:1px solid #304650}.tabs{display:flex;gap:8px;flex-wrap:wrap}.hidden{display:none}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.muted{color:#a8b8bc}@media(max-width:600px){.grid{grid-template-columns:1fr}}</style></head><body><div class="wrap"><h1>MENOVA · HEALTH TIMELINE</h1><p><a href="../">Back to original prototype</a></p><div class="panel"><b>Demonstration only.</b> Use synthetic information. This page stores records in this browser only; it is not connected to MENOVA accounts and is not a secure medical record or diagnostic service.</div><div class="tabs"><button data-tab="home">Overview</button><button data-tab="habits">Lifestyle check-in</button><button data-tab="labs">Lab records</button><button data-tab="insights">Trends & insights</button><button data-tab="privacy">Privacy</button></div><section id="home" class="panel"><h2>Longitudinal male reproductive health</h2><p>Record sleep, stress, nutrition, physical activity and heat exposure over time. Keep laboratory results with their units and laboratory-specific reference intervals. Prepare questions for a qualified clinician.</p><div class="grid"><div class="panel">Lifestyle check-ins: <b id="hc">0</b></div><div class="panel">Lab records: <b id="lc">0</b></div></div></section><section id="habits" class="panel hidden"><h2>Lifestyle and environment</h2><label>Date<input id="date" type="date"></label><div class="grid"><label>Sleep hours<input id="sleep" type="number" min="0" max="24" step=".5"></label><label>Sleep quality<select id="sleepq"><option></option><option>Good</option><option>Fair</option><option>Poor</option></select></label><label>Stress 0–10<input id="stress" type="number" min="0" max="10"></label><label>Activity minutes<input id="activity" type="number" min="0" max="1440"></label><label>Nutrition<select id="nutrition"><option></option><option>Mostly balanced</option><option>Mixed</option><option>Limited / irregular</option></select></label><label>Heat exposure<select id="heat"><option></option><option>None noticed</option><option>Occasional</option><option>Frequent</option></select></label></div><label>Context<textarea id="notes"></textarea></label><button onclick="saveHabit()">Save check-in</button><p id="hm"></p><div id="habitList"></div></section><section id="labs" class="panel hidden"><h2>Laboratory record</h2><p class="muted">Copy values, units and the lab's reference interval exactly as printed. MENOVA does not interpret results as normal/abnormal or fertile/infertile.</p><label>Test<select id="test"><option>Semen analysis</option><option>Total testosterone</option><option>FSH</option><option>LH</option><option>Prolactin</option><option>Other</option></select></label><div class="grid"><label>Date<input id="ldate" type="date"></label><label>Facility<input id="facility"></label><label>Parameter<input id="parameter"></label><label>Result<input id="value"></label><label>Unit<input id="unit"></label><label>Lab reference interval<input id="range"></label></div><label>Notes<textarea id="lnote"></textarea></label><button onclick="saveLab()">Save lab record</button><p id="lm"></p><div id="labList"></div></section><section id="insights" class="panel hidden"><h2>Descriptive trends</h2><div id="trend"></div><p class="muted">Simple comparisons and counts only—not AI, diagnosis, causal inference or a validated risk score.</p><h3>Questions for a clinician</h3><ul><li>Could symptoms, medicines or conditions affect reproductive health?</li><li>Are any tests appropriate for my circumstances?</li><li>How should results be interpreted in context?</li></ul></section><section id="privacy" class="panel hidden"><h2>Privacy and control</h2><p>Records are stored in browser localStorage. They are not synced and this is not an encrypted clinical record.</p><button onclick="exportData()">Export JSON</button> <button onclick="clearData()">Delete enhanced demo records</button><h3>Before production</h3><ul><li>Authentication and server-side authorisation.</li><li>Tested row-level policies and member isolation.</li><li>Encryption, audit logs, retention and deletion.</li><li>Revocable consent, privacy review and clinical governance.</li></ul></section></div><script>const K='menova_enhanced_v1',$=x=>document.getElementById(x);let d=JSON.parse(localStorage.getItem(K)||'{"habits":[],"labs":[]}');$('date').value=new Date().toISOString().slice(0,10);$('ldate').value=$('date').value;function tab(x){document.querySelectorAll('section').forEach(s=>s.classList.toggle('hidden',s.id!==x))}document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>tab(b.dataset.tab));function save(){localStorage.setItem(K,JSON.stringify(d));render()}function esc(x){return String(x||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}function saveHabit(){let s=$('sleep').value,t=$('stress').value,a=$('activity').value;if(!$('date').value||(s!==''&&(s<0||s>24))||(t!==''&&(t<0||t>10))||(a!==''&&(a<0||a>1440)))return $('hm').textContent='Check date and ranges';d.habits.push({date:$('date').value,sleep:s===''?null:+s,sleepq:$('sleepq').value,stress:t===''?null:+t,activity:a===''?null:+a,nutrition:$('nutrition').value,heat:$('heat').value,notes:$('notes').value});save();$('hm').textContent='Saved in this browser'}function saveLab(){if(!$('ldate').value||!$('parameter').value||!$('value').value)return $('lm').textContent='Date, parameter and result required';d.labs.push({date:$('ldate').value,test:$('test').value,facility:$('facility').value,parameter:$('parameter').value,value:$('value').value,unit:$('unit').value,range:$('range').value,notes:$('lnote').value});save();$('lm').textContent='Saved in this browser'}function render(){$('hc').textContent=d.habits.length;$('lc').textContent=d.labs.length;$('habitList').innerHTML=d.habits.map(h=>'<div class="panel">'+esc(h.date)+' · Sleep '+esc(h.sleep)+'h · Stress '+esc(h.stress)+' · Activity '+esc(h.activity)+'m · '+esc(h.heat)+'</div>').join('');$('labList').innerHTML=d.labs.map(l=>'<div class="panel">'+esc(l.test)+' · '+esc(l.parameter)+': '+esc(l.value)+' '+esc(l.unit)+' · '+esc(l.date)+' · Lab range: '+esc(l.range)+'</div>').join('');let h=[...d.habits].sort((a,b)=>a.date.localeCompare(b.date)),txt=[];if(h.length<2)txt.push('Add at least two check-ins to compare.');else[['sleep','Sleep hours'],['stress','Stress'],['activity','Activity minutes']].forEach(p=>{let a=h[0][p[0]],b=h[h.length-1][p[0]];if(a!=null&&b!=null)txt.push(p[1]+': '+(b-a===0?'no difference':(b>a?'increased by ':'decreased by ')+Math.abs(b-a))+' between first and latest entry.')});$('trend').innerHTML=txt.map(x=>'<p>'+esc(x)+'</p>').join('')}function exportData(){let a=document.createElement('a'),u=URL.createObjectURL(new Blob([JSON.stringify(d,null,2)],{type:'application/json'}));a.href=u;a.download='menova-demo-records.json';a.click();URL.revokeObjectURL(u)}function clearData(){if(confirm('Delete enhanced demo records?')){d={habits:[],labs:[]};localStorage.removeItem(K);render()}}render();</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MENOVA · Health Timeline</title>
+<style>
+:root{color-scheme:dark}body{margin:0;background:#101b24;color:#edf5f4;font:15px/1.5 system-ui,sans-serif}.wrap{max-width:950px;margin:auto;padding:18px}.panel{background:#192a34;border:1px solid #304650;border-radius:12px;padding:16px;margin:12px 0}button,a{display:inline-block;padding:10px 13px;border-radius:8px;background:#213943;color:#fff;border:1px solid #41665f;text-decoration:none;cursor:pointer}button:disabled{opacity:.55;cursor:not-allowed}input,select,textarea{display:block;width:100%;box-sizing:border-box;padding:10px;margin:5px 0 12px;background:#0d1921;color:white;border:1px solid #304650;border-radius:7px}.tabs,.actions{display:flex;gap:8px;flex-wrap:wrap}.hidden{display:none!important}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.muted{color:#a8b8bc}.notice{padding:12px;border:1px solid #735638;background:#342b20;border-radius:9px}.error{color:#ffc0c0}.item{border-top:1px solid #304650;padding:12px 0}.small{font-size:12px;color:#a8b8bc}@media(max-width:600px){.grid{grid-template-columns:1fr}.wrap{padding:12px}}
+</style>
+</head>
+<body><div class="wrap">
+<h1>MENOVA · HEALTH TIMELINE</h1><p><a href="../">← Back to MENOVA</a></p>
+<section id="auth" class="panel"><h2>Sign in to your MENOVA account</h2><p class="muted">This timeline uses the same Supabase account as the main MENOVA prototype. Sign in there first, then return to this page.</p><p><a href="../">Open MENOVA sign-in</a></p><p id="authState" role="status">Checking your existing session…</p></section>
+<div id="app" class="hidden">
+<div class="panel"><div class="actions"><b id="accountLabel">Connected account</b><button id="refreshBtn" type="button">Refresh records</button></div><p class="small">Records are saved to your authenticated MENOVA account. Use synthetic information for this demonstration. This is not a clinical record or diagnostic service.</p><p id="status" role="status"></p></div>
+<div class="tabs"><button data-tab="home">Overview</button><button data-tab="habits">Lifestyle check-in</button><button data-tab="labs">Lab records</button><button data-tab="insights">Trends & insights</button><button data-tab="privacy">Privacy & export</button></div>
+<section id="home" class="panel"><h2>Longitudinal male reproductive health</h2><p>Record sleep, stress, nutrition, physical activity and heat exposure over time. Keep laboratory results with their units and laboratory-specific reference intervals. Prepare questions for a qualified clinician.</p><div class="grid"><div class="panel">Lifestyle check-ins: <b id="hc">0</b></div><div class="panel">Lab records: <b id="lc">0</b></div></div></section>
+<section id="habits" class="panel hidden"><h2>Lifestyle and environment</h2>
+<label>Date<input id="date" type="date" required></label><div class="grid">
+<label>Sleep hours<input id="sleep" type="number" min="0" max="24" step=".5"></label>
+<label>Sleep quality<select id="sleepq"><option value="">Not recorded</option><option value="good">Good</option><option value="fair">Fair</option><option value="poor">Poor</option></select></label>
+<label>Stress 0–10<input id="stress" type="number" min="0" max="10" step="1"></label>
+<label>Activity minutes<input id="activity" type="number" min="0" max="1440" step="1"></label>
+<label>Nutrition<select id="nutrition"><option value="">Not recorded</option><option value="mostly_balanced">Mostly balanced</option><option value="mixed">Mixed</option><option value="limited_irregular">Limited / irregular</option></select></label>
+<label>Heat exposure<select id="heat"><option value="">Not recorded</option><option value="none_noticed">None noticed</option><option value="occasional">Occasional</option><option value="frequent">Frequent</option></select></label></div>
+<label>Context<textarea id="notes" maxlength="3000"></textarea></label><button id="saveHabit" type="button">Save check-in</button><p id="hm" role="status"></p><div id="habitList"></div></section>
+<section id="labs" class="panel hidden"><h2>Laboratory record</h2><p class="muted">Copy values, units and the lab's reference interval exactly as printed. MENOVA does not interpret results as normal/abnormal or fertile/infertile.</p>
+<label>Test<select id="test"><option>Semen analysis</option><option>Total testosterone</option><option>FSH</option><option>LH</option><option>Prolactin</option><option>Other</option></select></label><div class="grid">
+<label>Date<input id="ldate" type="date" required></label><label>Facility<input id="facility" maxlength="200"></label>
+<label>Parameter<input id="parameter" maxlength="200" required></label><label>Result<input id="value" maxlength="200" required></label>
+<label>Unit<input id="unit" maxlength="80"></label><label>Lab reference interval<input id="range" maxlength="200"></label></div>
+<label>Notes<textarea id="lnote" maxlength="3000"></textarea></label><button id="saveLab" type="button">Save lab record</button><p id="lm" role="status"></p><div id="labList"></div></section>
+<section id="insights" class="panel hidden"><h2>Descriptive trends</h2><div id="trend"></div><p class="muted">Simple comparisons and counts only—not AI, diagnosis, causal inference or a validated risk score.</p><h3>Questions for a clinician</h3><ul><li>Could symptoms, medicines or conditions affect reproductive health?</li><li>Are any tests appropriate for my circumstances?</li><li>How should results be interpreted in context?</li></ul></section>
+<section id="privacy" class="panel hidden"><h2>Privacy and control</h2><p>Records are stored in the MENOVA Supabase database. Row-level security is enabled and access is restricted to the signed-in member's own rows. This is an early demonstration, not a production-certified clinical record.</p><div class="actions"><button id="exportBtn" type="button">Export my records (JSON)</button><button id="deleteBtn" type="button">Delete all timeline records</button></div><h3>Before production</h3><ul><li>Independent security and privacy review.</li><li>Audit logging, retention and deletion policy.</li><li>Clinical governance and validation.</li><li>Clear consent and clinician-sharing workflow.</li></ul></section>
+</div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.0/dist/umd/supabase.min.js"></script>
+<script>
+'use strict';
+const SUPABASE_URL='https://ytofiyvteuuchmqznzwc.supabase.co';
+const SUPABASE_KEY='sb_publishable_XO22O6kcNVoTH_xkqk';
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const $=id=>document.getElementById(id);
+let session=null, habits=[], labs=[];
+const today=new Date().toISOString().slice(0,10);
+$('date').value=today;$('ldate').value=today;
+function message(target,text,isError=false){$(target).textContent=text;$(target).classList.toggle('error',isError)}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function tab(id){document.querySelectorAll('#app>section').forEach(s=>s.classList.toggle('hidden',s.id!==id))}
+document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>tab(b.dataset.tab)));
+function requireSession(){if(!session){$('app').classList.add('hidden');$('auth').classList.remove('hidden');message('authState','No active MENOVA session. Sign in on the main page, then return here.',true);return false}return true}
+async function loadRecords(){
+ if(!requireSession())return;
+ message('status','Loading your records…');
+ const [h,l]=await Promise.all([
+  sb.from('lifestyle_checkins').select('*').eq('member_user_id',session.user.id).order('checkin_date',{ascending:true}),
+  sb.from('lab_results').select('*').eq('member_user_id',session.user.id).order('test_date',{ascending:true})
+ ]);
+ if(h.error||l.error){message('status','Could not load records: '+(h.error||l.error).message,true);return}
+ habits=h.data||[];labs=l.data||[];render();message('status','Your account records are up to date.');
+}
+function render(){
+ $('hc').textContent=habits.length;$('lc').textContent=labs.length;
+ $('habitList').innerHTML=habits.slice().reverse().map(h=>'<div class="item"><b>'+esc(h.checkin_date)+'</b><p>Sleep: '+esc(h.sleep_hours??'Not recorded')+' h · Stress: '+esc(h.stress_level??'Not recorded')+' · Activity: '+esc(h.activity_minutes??'Not recorded')+' min</p><p class="small">Sleep quality: '+esc(h.sleep_quality||'Not recorded')+' · Nutrition: '+esc(h.nutrition_pattern||'Not recorded')+' · Heat: '+esc(h.heat_exposure||'Not recorded')+'</p><p>'+esc(h.notes||'')+'</p><button type="button" data-delete-h="'+esc(h.id)+'">Delete this check-in</button></div>').join('')||'<p class="muted">No lifestyle check-ins yet.</p>';
+ $('labList').innerHTML=labs.slice().reverse().map(l=>'<div class="item"><b>'+esc(l.test_name)+' · '+esc(l.parameter)+'</b><p>'+esc(l.result_value)+' '+esc(l.unit||'')+' · '+esc(l.test_date)+'</p><p class="small">Facility: '+esc(l.facility||'Not recorded')+' · Lab reference interval: '+esc(l.reference_interval||'Not recorded')+'</p><p>'+esc(l.notes||'')+'</p><button type="button" data-delete-l="'+esc(l.id)+'">Delete this lab record</button></div>').join('')||'<p class="muted">No lab records yet.</p>';
+ const sorted=habits.slice().sort((a,b)=>a.checkin_date.localeCompare(b.checkin_date)||String(a.created_at).localeCompare(String(b.created_at)));
+ const lines=[];
+ if(sorted.length<2)lines.push('Add at least two check-ins on different dates to compare entries.');
+ else [['sleep_hours','Sleep hours'],['stress_level','Stress level'],['activity_minutes','Activity minutes']].forEach(([key,label])=>{const a=sorted.find(x=>x[key]!==null&&x[key]!==undefined),b=sorted.slice().reverse().find(x=>x[key]!==null&&x[key]!==undefined);if(a&&b&&a.id!==b.id){const delta=Number(b[key])-Number(a[key]);lines.push(label+': '+(delta===0?'no difference':(delta>0?'increased by ':'decreased by ')+Math.abs(delta))+' between the earliest and latest recorded values.')}});
+ $('trend').innerHTML=lines.map(x=>'<p>'+esc(x)+'</p>').join('');
+ document.querySelectorAll('[data-delete-h]').forEach(b=>b.addEventListener('click',()=>deleteOne('lifestyle_checkins',b.dataset.deleteH)));
+ document.querySelectorAll('[data-delete-l]').forEach(b=>b.addEventListener('click',()=>deleteOne('lab_results',b.dataset.deleteL)));
+}
+async function saveHabit(){
+ if(!requireSession())return;
+ const date=$('date').value,s=$('sleep').value,t=$('stress').value,a=$('activity').value;
+ if(!date||(s!==''&&(+s<0||+s>24))||(t!==''&&(+t<0||+t>10||!Number.isInteger(+t)))||(a!==''&&(+a<0||+a>1440||!Number.isInteger(+a))))return message('hm','Check the date and numeric ranges.',true);
+ const row={member_user_id:session.user.id,checkin_date:date,sleep_hours:s===''?null:+s,sleep_quality:$('sleepq').value||null,stress_level:t===''?null:+t,activity_minutes:a===''?null:+a,nutrition_pattern:$('nutrition').value||null,heat_exposure:$('heat').value||null,notes:$('notes').value.trim()||null,is_simulated:true};
+ const {error}=await sb.from('lifestyle_checkins').insert(row);
+ if(error)return message('hm','Save failed: '+error.message,true);
+ $('sleep').value='';$('sleepq').value='';$('stress').value='';$('activity').value='';$('nutrition').value='';$('heat').value='';$('notes').value='';
+ message('hm','Check-in saved to your MENOVA account.');await loadRecords();
+}
+async function saveLab(){
+ if(!requireSession())return;
+ if(!$('ldate').value||!$('parameter').value.trim()||!$('value').value.trim())return message('lm','Date, parameter and result are required.',true);
+ const row={member_user_id:session.user.id,test_name:$('test').value,test_date:$('ldate').value,facility:$('facility').value.trim()||null,parameter:$('parameter').value.trim(),result_value:$('value').value.trim(),unit:$('unit').value.trim()||null,reference_interval:$('range').value.trim()||null,notes:$('lnote').value.trim()||null,is_simulated:true};
+ const {error}=await sb.from('lab_results').insert(row);
+ if(error)return message('lm','Save failed: '+error.message,true);
+ ['facility','parameter','value','unit','range','lnote'].forEach(id=>$(id).value='');
+ message('lm','Lab record saved to your MENOVA account.');await loadRecords();
+}
+async function deleteOne(table,id){
+ if(!requireSession()||!confirm('Delete this record?'))return;
+ const {error}=await sb.from(table).delete().eq('id',id).eq('member_user_id',session.user.id);
+ if(error){message('status','Delete failed: '+error.message,true);return}await loadRecords();
+}
+async function exportData(){
+ if(!requireSession())return;
+ const payload={exported_at:new Date().toISOString(),account:session.user.email||null,lifestyle_checkins:habits,lab_results:labs};
+ const url=URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}));
+ const a=document.createElement('a');a.href=url;a.download='menova-health-timeline.json';a.click();URL.revokeObjectURL(url);
+}
+async function deleteAll(){
+ if(!requireSession()||!confirm('Permanently delete all your MENOVA timeline check-ins and lab records? This cannot be undone.'))return;
+ const h=await sb.from('lifestyle_checkins').delete().eq('member_user_id',session.user.id);
+ if(h.error)return message('status','Lifestyle records were not deleted: '+h.error.message,true);
+ const l=await sb.from('lab_results').delete().eq('member_user_id',session.user.id);
+ if(l.error)return message('status','Lifestyle records were deleted, but lab deletion failed: '+l.error.message,true);
+ await loadRecords();message('status','All timeline records deleted.');
+}
+$('saveHabit').addEventListener('click',saveHabit);$('saveLab').addEventListener('click',saveLab);$('refreshBtn').addEventListener('click',loadRecords);$('exportBtn').addEventListener('click',exportData);$('deleteBtn').addEventListener('click',deleteAll);
+async function init(){
+ const {data,error}=await sb.auth.getSession();
+ if(error){message('authState','Session check failed: '+error.message,true);return}
+ session=data.session;
+ if(!session){requireSession();return}
+ $('auth').classList.add('hidden');$('app').classList.remove('hidden');$('accountLabel').textContent='Signed in: '+(session.user.email||'MENOVA member');
+ await loadRecords();
+}
+sb.auth.onAuthStateChange((event,nextSession)=>{if(event==='SIGNED_OUT'){session=null;requireSession()}else if(nextSession&&!session){session=nextSession;init()}});
+init();
+</script></body></html>
