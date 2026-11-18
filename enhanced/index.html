@@ -77,7 +77,8 @@ async function load(){
  sb.from('biomarker_records').select('*').eq('member_user_id',session.user.id).order('collection_date'),
  sb.from('lab_results').select('*').eq('member_user_id',session.user.id).order('test_date'),
  sb.from('consultation_requests').select('*').eq('member_user_id',session.user.id).order('created_at',{ascending:false}),
- sb.from('referral_requests').select('*').eq('member_user_id',session.user.id).order('created_at',{ascending:false}),\n sb.from('clinician_lab_records').select('*').eq('member_user_id',session.user.id).order('test_date',{ascending:false})
+ sb.from('referral_requests').select('*').eq('member_user_id',session.user.id).order('created_at',{ascending:false}),
+ sb.from('clinician_lab_records').select('*').eq('member_user_id',session.user.id).order('test_date',{ascending:false})
  ]);
  const err=qs.find(x=>x.error);if(err){msg('status','Could not load records: '+err.error.message,true);return}
  [habits,biomarkers,labs,consults,referrals,clinicianLabs]=qs.map(x=>x.data||[]);window.sb=sb;window.session=session;window.habits=habits;window.biomarkers=biomarkers;window.labs=labs;window.esc=esc;render();window.dispatchEvent(new Event('menova-records-loaded'));await loadClinicianInbox();msg('status','Records refreshed from your account.');
