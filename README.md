@@ -1,47 +1,39 @@
 # MENOVA — Member-centred men's health prototype
 
-MENOVA is a privacy-first digital companion focused on earlier support for men's health, with the competition demonstration centred on male reproductive health.
+MENOVA is a privacy-first digital companion focused on earlier support for men's health, with the demonstration centred on male reproductive health.
 
 ## Live demonstration
-
 https://aassekgetle-star.github.io/menova/
 
-The application currently includes:
+## Existing prototype
 - Email/password account creation and sign-in using Supabase Auth.
-- Member profile creation.
-- Reproductive health assessment with transparent, rule-based prompts (not diagnosis or a validated risk score).
-- Private text diary with transparent keyword topic tagging.
-- Member health record view.
-- Explicit consent preview and simulated handover saved to the MENOVA database.
-- Scenario lab with synthetic cases, including an emergency red-flag example.
+- Member profile, reproductive-health intake and explainable rule-based prompts.
+- Private diary with transparent keyword topic tagging.
+- Member health record and explicit consent preview / simulated handover.
+- Synthetic scenario lab, including an emergency red-flag example.
 - Simulated clinician view.
 
-## Database
+## Reviewer-feedback expansion (upgrade branch)
+The additive `/enhanced/` experience includes:
+- Longitudinal sleep, stress, activity, nutrition, heat exposure, smoking/nicotine, alcohol and medication-change tracking.
+- Structured biomarker capture with specimen, result, unit, lab reference interval and laboratory identity.
+- Chronological descriptive trend summaries and biomarker history.
+- Member-private consultation and specialist-referral request drafts.
+- JSON export and deletion controls for the new timeline and request records.
 
-MENOVA uses its own Supabase project, separate from other projects and organisations:
-- Project ref: `ytofiyvteuuchmqznzwc`
-- Region: EU Central
-- Tables: `member_profiles`, `health_assessments`, `diary_entries`, `sharing_consents`, `clinician_profiles`, `health_handovers`.
-- Row Level Security is enabled on all six public tables.
-- Browser code uses only the Supabase publishable key. Never put a service-role or secret key in this repository.
-- Member records are scoped to the signed-in account through RLS.
-- Clinician handover access is restricted to the assigned, verified clinician identity at the database policy level.
+## Supabase
+MENOVA uses its own Supabase project (EU Central), separate from other projects. The browser uses only the publishable key; never put a service-role or secret key in this repository. New tables have RLS enabled and owner-scoped policies. The new AI insights table is a future persistence point; it is not populated by a live model.
 
-## Important current limitations
-
-- This is a competition prototype, not a clinical service.
-- Use synthetic/demo information only. Do not enter real personal health information.
-- Assessments are not diagnosis, medical advice, or a validated risk prediction.
-- Diary tagging uses simple keyword matching, not an AI model.
-- Handover records are stored as simulated records. They are not sent to a real clinician, and there is no live directory, referral booking, or teleconsultation.
-- Clinician verification and role assignment require a trusted administrative process that has not yet been implemented.
-- Email confirmation settings depend on the Supabase project's Auth configuration. If signup asks for email confirmation, confirm the email before signing in.
-- Production use requires clinical governance, security review, privacy/legal review, tested consent revocation, monitoring, and end-to-end security testing.
-
-## Local development
-
-Open `index.html` through a local static server or use the GitHub Pages deployment. The app uses the Supabase JavaScript v2 browser client from a pinned CDN release.
+## Important limitations
+- The upgrade is on a separate branch and draft pull request; the original main branch and existing public deployment have not been overwritten or updated.
+- Use synthetic/demo information only. This is not a clinical service or production-certified clinical record.
+- Descriptive comparisons are not AI, diagnosis, validated risk prediction, causal inference or fertility interpretation.
+- A genuine AI synthesis service is not connected. It requires a server-side model provider, managed secret, safety testing, monitoring and clinical governance.
+- Biomarker values are stored as entered. Secure report file upload is not yet implemented.
+- Consultation/referral records are demonstration drafts only. No verified specialist network, referral delivery, appointment scheduling, teleconsultation vendor or secure live clinician messaging is connected.
+- Clinician verification and privileged case processing require a trusted administrative process and audited access controls.
+- Supabase Auth leaked-password protection remains disabled and must be enabled in project Auth settings before any real pilot.
+- Production requires independent security/privacy review, end-to-end two-account RLS testing, clinical governance, retention/deletion and incident-response policies.
 
 ## Safety
-
-MENOVA is not a substitute for professional care. Sudden severe testicular pain requires immediate emergency assessment.
+MENOVA does not replace professional care. Sudden severe testicular pain requires immediate emergency assessment; do not wait for an app assessment.
