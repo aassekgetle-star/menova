@@ -115,9 +115,10 @@ async function startApp(user){
  }
  const {data:cp}=await sb.from('clinician_profiles').select('user_id').eq('user_id',user.id).maybeSingle();
  if(cp){await sb.auth.signOut();currentUser=null;return authMessage('This account is registered as a doctor. Choose Doctor to sign in.',true)}
- currentRole='personal';$('authGate').classList.add('hide');$('appLayout').classList.remove('hide');document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('hide'));
+ currentRole='personal';
  const md=user.user_metadata||{};const memberProfile={user_id:user.id};if(md.display_name)memberProfile.display_name=md.display_name;if(md.date_of_birth)memberProfile.date_of_birth=md.date_of_birth;const {error}=await sb.from('member_profiles').upsert(memberProfile,{onConflict:'user_id'});if(error){toast('Profile setup issue: '+error.message);return}
- try{await loadCloudData();await loadClinicianDirectory();toast('Signed in · MENOVA records loaded')}catch(e){toast('Cloud load failed: '+e.message)}
+ // Route every signed-in account into the same full MENOVA application. The root page is sign-in only; keeping personal accounts here left them in the older limited prototype.
+ window.location.replace('./enhanced/');
 }
 function validEmail(email){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)}
 function validateCredentials(email,password){if(!validEmail(email))return 'Enter a valid email address, for example name@example.com.';if(password.length<8)return 'Your password must contain at least 8 characters.';return ''}
