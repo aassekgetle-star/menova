@@ -32,7 +32,7 @@
  function preview(){
   previewSnapshot=selectedSnapshot();
   if(!Object.keys(previewSnapshot).length){$('hoPreviewBox').textContent='Select at least one category.';$('hoApprove').disabled=true;return}
-  $('hoPreviewBox').innerHTML='<b>Preview of the exact snapshot to be shared</b>'+Object.entries(previewSnapshot).map(([k,v])=>'<div class="item"><b>'+window.esc(k.replaceAll('_',' '))+'</b><p>'+window.esc(Array.isArray(v)?v.length+' records':JSON.stringify(v).slice(0,500))+'</p></div>').join('')+'<p>'+window.esc($('hoMessage').value)+'</p>';
+  $('hoPreviewBox').innerHTML='<b>Preview of the exact information to be shared</b>'+Object.entries(previewSnapshot).map(([k,v])=>'<div class="item"><b>'+window.esc(k.replaceAll('_',' '))+'</b><p>'+window.esc(Array.isArray(v)?v.length+' saved entries':Object.keys(v||{}).map(x=>x.replaceAll('_',' ')).join(' · '))+'</p></div>').join('')+'<p>'+window.esc($('hoMessage').value)+'</p><p class="small muted">The clinician receives a readable report of these selected records, not a code dump.</p>';
   $('hoApprove').disabled=false;
  }
  async function approve(){
@@ -54,9 +54,26 @@
   await window.sb.from('health_handovers').update({status:'revoked'}).eq('id',handoverId).eq('member_user_id',window.session.user.id);
   $('hoStatus').textContent='Access revoked.';await loadHandoverData();
  }
+ function reportEscape(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function reportValue(v){
+ if(v===null||v===undefined||v==='')return '<span class="muted">Not recorded</span>';
+ if(Array.isArray(v)){
+  if(!v.length)return '<span class="muted">No entries recorded</span>';
+  if(v.every(x=>x&&typeof x==='object'&&!Array.isArray(x))){const keys=[...new Set(v.flatMap(x=>Object.keys(x)))];return '<div class="table-wrap"><table><thead><tr>'+keys.map(k=>'<th>'+reportEscape(k.replaceAll('_',' '))+'</th>').join('')+'</tr></thead><tbody>'+v.map(x=>'<tr>'+keys.map(k=>'<td>'+reportValue(x[k])+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>'}
+  return '<ul>'+v.map(x=>'<li>'+reportValue(x)+'</li>').join('')+'</ul>';
+ }
+ if(typeof v==='object')return '<dl>'+Object.entries(v).map(([k,x])=>'<div><dt>'+reportEscape(k.replaceAll('_',' '))+'</dt><dd>'+reportValue(x)+'</dd></div>').join('')+'</dl>';
+ return reportEscape(v);
+}
+function downloadFormattedHandover(snapshot,createdAt,clinicianName){
+ const sections=Object.entries(snapshot||{}).filter(([k])=>!['member_message','approved_at'].includes(k)).map(([k,v])=>'<section><h2>'+reportEscape(k.replaceAll('_',' '))+'</h2>'+reportValue(v)+'</section>').join('');
+ const html='<!doctype html><html><head><meta charset="utf-8"><title>MENOVA member-approved health handover</title><style>body{font:15px/1.5 Arial,sans-serif;color:#202433;max-width:1000px;margin:36px auto;padding:0 24px}header{border-bottom:3px solid #7651b5;padding-bottom:18px}h1{font-size:25px;margin:0}h2{font-size:18px;text-transform:capitalize;color:#514078}section{margin:22px 0;padding:16px;border:1px solid #ddd;border-radius:10px;break-inside:avoid}dl>div{display:grid;grid-template-columns:220px 1fr;gap:14px;padding:7px 0;border-bottom:1px solid #eee}dt{font-weight:bold;text-transform:capitalize}dd{margin:0;white-space:pre-wrap}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #ddd;padding:7px;text-align:left;vertical-align:top}th{text-transform:capitalize;background:#f4f1f8}.muted{color:#777}.message{background:#f8f6fb;padding:12px;border-radius:8px}@media print{body{margin:0;max-width:none}section{break-inside:avoid}}</style></head><body><header><h1>MENOVA · Member-approved health handover</h1><p>Prepared '+reportEscape(new Date(createdAt||Date.now()).toLocaleString())+'</p><p>Selected clinician: '+reportEscape(clinicianName||'Assigned clinician')+'</p></header><p class="message"><b>Member message:</b> '+reportEscape(snapshot?.member_message||'No accompanying message')+'</p>'+sections+'<footer><p class="muted">This report reproduces information selected and approved by the member. It is not a diagnosis or clinical interpretation. Verify source documents and laboratory context during care.</p></footer></body></html>';
+ const blob=new Blob([html],{type:'text/html;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='MENOVA-health-handover-'+new Date(createdAt||Date.now()).toISOString().slice(0,10)+'.html';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+}
+window.menovaDownloadHandover=downloadFormattedHandover;
  function renderHandovers(){
-  $('hoMemberList').innerHTML=handovers.map(h=>'<div class="item"><b>'+window.esc(new Date(h.created_at).toLocaleString())+' · '+window.esc(h.status)+'</b><p>Clinician: '+window.esc((window.handoverClinicians||[]).find(c=>c.user_id===h.clinician_user_id)?.display_name||'Assigned clinician')+'</p>'+(h.status!=='revoked'?'<button data-ho-revoke="'+h.consent_id+'" data-ho-id="'+h.id+'">Revoke access</button>':'')+'</div>').join('')||'<p class="muted">No handovers recorded.</p>';
-  document.querySelectorAll('[data-ho-revoke]').forEach(b=>b.onclick=()=>revoke(b.dataset.hoRevoke,b.dataset.hoId));
+  $('hoMemberList').innerHTML=handovers.map(h=>'<div class="item"><b>'+window.esc(new Date(h.created_at).toLocaleString())+' · '+window.esc(h.status)+'</b><p>Clinician: '+window.esc((window.handoverClinicians||[]).find(c=>c.user_id===h.clinician_user_id)?.display_name||'Assigned clinician')+'</p><button type="button" data-ho-download="'+h.id+'">Download readable handover report</button>'+(h.status!=='revoked'?'<button data-ho-revoke="'+h.consent_id+'" data-ho-id="'+h.id+'">Revoke access</button>':'')+'</div>').join('')||'<p class="muted">No handovers recorded.</p>';
+  document.querySelectorAll('[data-ho-revoke]').forEach(b=>b.onclick=()=>revoke(b.dataset.hoRevoke,b.dataset.hoId));document.querySelectorAll('[data-ho-download]').forEach(b=>b.onclick=()=>{const item=handovers.find(x=>x.id===b.dataset.hoDownload);if(item)downloadFormattedHandover(item.shared_snapshot,item.created_at,(window.handoverClinicians||[]).find(c=>c.user_id===item.clinician_user_id)?.display_name)});
  }
  function renderCharts(){
   const host=$('wellnessCharts');if(!host||!window.habits)return;
