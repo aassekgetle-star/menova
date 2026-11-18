@@ -15,7 +15,7 @@
   ]);
   const bad=q.find(x=>x.error);if(bad){$('hoStatus').textContent='Could not load handover records: '+bad.error.message;return}
   assessments=q[0].data||[];diaryEntries=q[1].data||[];handovers=q[2].data||[];
-  window.handoverClinicians=q[3].data||[];
+  window.handoverClinicians=q[3].data||[];insightRecords=q[4].data||[];
   $('hoClinician').innerHTML='<option value="">Select a clinician</option>'+window.handoverClinicians.map(c=>'<option value="'+c.user_id+'">'+window.esc(c.display_name)+' · '+window.esc(c.specialty||'Clinician')+' · '+(c.verification_status==='verified'?'Verified':'Self-reported prototype')+'</option>').join('');
   renderHandovers();
  }
