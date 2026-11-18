@@ -32,7 +32,7 @@
  function preview(){
   previewSnapshot=selectedSnapshot();
   if(!Object.keys(previewSnapshot).length){$('hoPreviewBox').textContent='Select at least one category.';$('hoApprove').disabled=true;return}
-  $('hoPreviewBox').innerHTML='<b>Preview of the exact snapshot to be shared</b>'+Object.entries(previewSnapshot).map(([k,v])=>'<div class="item"><b>'+window.esc(k.replaceAll('_',' '))+'</b><p>'+window.esc(Array.isArray(v)?v.length+' records':JSON.stringify(v).slice(0,500))+'</p></div>').join('')+'<p>'+window.esc($('hoMessage').value)+'</p><p class="small muted">Uploaded report files are not directly attached in this release. Test values and report metadata are included; secure clinician file access requires a separate scoped storage implementation.</p>';
+  $('hoPreviewBox').innerHTML='<b>Preview of the exact snapshot to be shared</b>'+Object.entries(previewSnapshot).map(([k,v])=>'<div class="item"><b>'+window.esc(k.replaceAll('_',' '))+'</b><p>'+window.esc(Array.isArray(v)?v.length+' records':JSON.stringify(v).slice(0,500))+'</p></div>').join('')+'<p>'+window.esc($('hoMessage').value)+'</p>';
   $('hoApprove').disabled=false;
  }
  async function approve(){
