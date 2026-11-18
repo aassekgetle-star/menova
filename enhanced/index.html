@@ -130,12 +130,12 @@ sb.auth.onAuthStateChange((event,next)=>{if(event==='SIGNED_OUT'){session=null;r
  async function askAI(){
   const message=q.value.trim();if(!message)return;
   if(message.length>3000){status.textContent='Please keep your question under 3,000 characters.';return;}
-  if(!window.sb){status.textContent='MENOVA connection is not ready. Refresh and sign in again.';return;}
+  if(typeof sb==='undefined'){status.textContent='MENOVA connection is not ready. Refresh and sign in again.';return;}
   ask.disabled=true;status.textContent='MENOVA AI is preparing an educational response…';add('You',message);q.value='';
   try{
-   const {data:{session},error:sessionError}=await window.sb.auth.getSession();
+   const {data:{session},error:sessionError}=await sb.auth.getSession();
    if(sessionError||!session?.access_token)throw new Error('Please sign in to your MENOVA account again.');
-   const {data,error}=await window.sb.functions.invoke('menova-guidance',{body:{message,history}});
+   const {data,error}=await sb.functions.invoke('menova-guidance',{body:{message,history}});
    if(error)throw error;
    if(!data?.reply)throw new Error(data?.error||'No response was returned.');
    add('MENOVA AI',data.reply);history.push({role:'user',content:message},{role:'assistant',content:data.reply});history=history.slice(-12);
