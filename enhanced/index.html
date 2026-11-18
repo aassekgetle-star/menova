@@ -136,7 +136,11 @@ sb.auth.onAuthStateChange((event,next)=>{if(event==='SIGNED_OUT'){session=null;r
   status.textContent='Preparing the local model. First download is approximately '+(gpu?'118 MB':'182 MB')+' plus small supporting files. Keep this page open…';
   try{
    const {pipeline}=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.0');
-   generator=await pipeline('text-generation',MODEL,{device:gpu?'webgpu':'wasm',dtype:gpu?'q4f16':'q4',progress_callback:(p)=>{if(p.status==='progress'&&p.total)status.textContent='Downloading model: '+Math.round(p.progress||0)+'%';else if(p.status==='initiate')status.textContent='Starting model download…';else if(p.status==='done')status.textContent='Model file ready. Finishing setup…';}});
+   const options={progress_callback:(p)=>{if(p.status==='progress'&&p.total)status.textContent='Downloading model: '+Math.round(p.progress||0)+'%';else if(p.status==='initiate')status.textContent='Starting model download…';else if(p.status==='done')status.textContent='Model file ready. Finishing setup…';}};
+   if(gpu){
+    try{generator=await pipeline('text-generation',MODEL,{...options,device:'webgpu',dtype:'q4f16'});}
+    catch(webgpuError){status.textContent='GPU setup was unavailable. Trying the slower device CPU fallback…';generator=await pipeline('text-generation',MODEL,{...options,device:'wasm',dtype:'q4'});}
+   }else{generator=await pipeline('text-generation',MODEL,{...options,device:'wasm',dtype:'q4'});}
    status.textContent='On-device AI is ready. Your questions stay in this browser.';
    ask.disabled=false;load.textContent='On-device AI ready';load.disabled=true;
   }catch(e){generator=null;load.disabled=false;status.textContent='This device could not prepare the local model. Try an updated Chrome browser with enough free memory/storage. Your question was not sent anywhere.';}
