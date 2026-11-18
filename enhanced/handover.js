@@ -48,8 +48,8 @@
  }
  async function revoke(consentId,handoverId){
   if(!confirm('Revoke future access? Information already viewed, copied or downloaded cannot be recalled.'))return;
-  const {error}=await window.sb.from('sharing_consents').update({revoked_at:new Date().toISOString()}).eq('id',consentId).eq('member_user_id',window.session.user.id);
-  if(error){$('hoStatus').textContent='Revocation failed: '+error.message;return}
+  const {error}=await window.sb.from('health_handovers').update({status:'revoked'}).eq('id',handoverId).eq('member_user_id',window.session.user.id);if(error){$('hoStatus').textContent='Could not close handover: '+error.message;return}const consentUpdate=await window.sb.from('sharing_consents').update({revoked_at:new Date().toISOString()}).eq('id',consentId).eq('member_user_id',window.session.user.id);const error2=consentUpdate.error;
+  if(error2){$('hoStatus').textContent='Handover closed, but consent audit update failed: '+error2.message;return}
   await window.sb.from('health_handovers').update({status:'revoked'}).eq('id',handoverId).eq('member_user_id',window.session.user.id);
   $('hoStatus').textContent='Access revoked.';await loadHandoverData();
  }
