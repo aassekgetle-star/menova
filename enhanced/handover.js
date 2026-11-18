@@ -2,7 +2,7 @@
    Runs locally in the member's authenticated browser. No external AI service is used. */
 (function(){
  const $=id=>document.getElementById(id);
- let assessments=[],diaryEntries=[],handovers=[],previewSnapshot=null;
+ let assessments=[],diaryEntries=[],handovers=[],insightRecords=[],previewSnapshot=null;
  const periodStart=period=>{const d=new Date();if(period==='week')d.setDate(d.getDate()-6);else if(period==='month')d.setDate(1);else d.setMonth(0,1);d.setHours(0,0,0,0);return d};
  async function loadHandoverData(){
   if(!window.session)return;
@@ -11,7 +11,7 @@
    window.sb.from('health_assessments').select('*').eq('member_user_id',uid).order('created_at',{ascending:false}).limit(100),
    window.sb.from('diary_entries').select('*').eq('member_user_id',uid).order('created_at',{ascending:false}).limit(200),
    window.sb.from('health_handovers').select('id,clinician_user_id,consent_id,shared_snapshot,status,created_at').eq('member_user_id',uid).order('created_at',{ascending:false}).limit(100),
-   window.sb.from('clinician_profiles').select('user_id,display_name,specialty,verification_status').in('verification_status',['verified','self_reported']).order('display_name')
+   window.sb.from('clinician_profiles').select('user_id,display_name,specialty,verification_status').in('verification_status',['verified','self_reported']).order('display_name'),\n   window.sb.from('ai_insights').select('insight_text,insight_type,model_name,created_at').eq('member_user_id',uid).order('created_at',{ascending:false}).limit(30)
   ]);
   const bad=q.find(x=>x.error);if(bad){$('hoStatus').textContent='Could not load handover records: '+bad.error.message;return}
   assessments=q[0].data||[];diaryEntries=q[1].data||[];handovers=q[2].data||[];
@@ -25,7 +25,7 @@
   if($('hoDiary').checked)s.diary_entries=diaryEntries;
   if($('hoLifestyle').checked)s.lifestyle_checkins=window.habits||[];
   if($('hoTests').checked)s.test_results={biomarker_records:window.biomarkers||[],lab_results:window.labs||[]};
-  if($('hoInsights').checked)s.wellness_overview={checkin_count:(window.habits||[]).length,diary_count:diaryEntries.length,biomarker_count:(window.biomarkers||[]).length,lab_count:(window.labs||[]).length};
+  if($('hoInsights').checked)s.wellness_summaries=insightRecords;
   return s;
  }
  function preview(){
