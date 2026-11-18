@@ -66,3 +66,7 @@ create policy "Members manage their own biomarker records" on public.biomarker_r
 create policy "Members manage their own consultation requests" on public.consultation_requests for all to authenticated using((select auth.uid())=member_user_id) with check((select auth.uid())=member_user_id);
 create policy "Members manage their own referral requests" on public.referral_requests for all to authenticated using((select auth.uid())=member_user_id) with check((select auth.uid())=member_user_id);
 create policy "Members manage their own AI insights" on public.ai_insights for all to authenticated using((select auth.uid())=member_user_id) with check((select auth.uid())=member_user_id);
+
+-- Supporting indexes added after advisor review
+create index if not exists consultation_requests_clinician_user_id_idx on public.consultation_requests(clinician_user_id);
+create index if not exists health_handovers_consent_id_idx on public.health_handovers(consent_id);
