@@ -23,16 +23,14 @@ input,select,textarea{background:#fff;color:#29283a;border:1px solid #dedbe8;bor
 <div class="tabs" id="memberTabs" aria-label="Health sections"><button class="active" data-tab="home">Overview</button><button data-tab="habits">Lifestyle</button><button data-tab="biomarkers">Test results</button><button data-tab="care">Care requests</button><button data-tab="messages">Messages</button><button data-tab="insights">Insights</button><button data-tab="handover">Doctor handover</button></div>
 <section id="clinicianDashboard" class="panel hidden">
  <h2>Clinician workspace</h2><p class="muted">Read-only access to the exact information each member has approved for this account. You cannot change their profile, sleep, lifestyle, journal or personal health entries.</p>
- <div class="notice">Member records below are view-only. Your only clinical record input here is a new laboratory result or an attached PDF report. Messages are separate from member records.</div>
- <h3>Member-approved handovers</h3><div id="doctorHandovers" class="panel">Loading approved handovers…</div>
- <h3>Add a laboratory result</h3><p class="small muted">Attach a result only to a currently active handover. Submitted results are added to the member's record and cannot be edited by the clinician.</p>
+ <div class="notice">Member records are view-only. Your only clinical record input is a separate laboratory result or attached PDF report. Messages are kept separate from member records.</div>
+ <div class="tabs doctor-tabs" aria-label="Clinician workspace navigation"><button class="active" type="button" data-doctor-tab="doctorRecordsPanel">Shared records</button><button type="button" data-doctor-tab="doctorLabPanel">Add lab result</button><button type="button" data-doctor-tab="doctorCommsPanel">Communication</button></div>
+ <div id="doctorRecordsPanel" class="doctor-panel"><h3>Member-approved handovers</h3><div id="doctorHandovers" class="panel">Loading approved handovers…</div></div>
+ <div id="doctorLabPanel" class="doctor-panel hidden"><h3>Add a laboratory result</h3><p class="small muted">Attach a result only to a currently active handover. Submitted results are separate clinician-authored records; member-entered information is never changed.</p>
  <label>Member handover<select id="doctorLabHandover"><option value="">Choose an active handover</option></select></label>
  <div class="grid"><label>Test / panel<input id="doctorLabTest" maxlength="160" placeholder="e.g. Semen analysis"></label><label>Biomarker / parameter<input id="doctorLabMarker" maxlength="160" placeholder="e.g. Total motility"></label><label>Collection date<input id="doctorLabDate" type="date"></label><label>Specimen type<input id="doctorLabSpecimen" maxlength="100"></label><label>Result value<input id="doctorLabValue" maxlength="160"></label><label>Unit<input id="doctorLabUnit" maxlength="80"></label><label>Laboratory reference interval<input id="doctorLabRange" maxlength="200"></label><label>Laboratory / facility<input id="doctorLabFacility" maxlength="200"></label></div>
- <label>Notes<textarea id="doctorLabNotes" maxlength="2000"></textarea></label>
- <label>Upload laboratory report (PDF only, max 10 MB)<input id="doctorLabFile" type="file" accept="application/pdf,.pdf"></label>
- <button id="doctorSaveLab" type="button">Submit lab result</button><p id="doctorLabStatus" role="status"></p>
- <h3>Consultations and communication</h3><div id="doctorConsultations" class="panel">Loading assigned requests…</div>
- <div class="panel"><h4>Messages with a member</h4><label>Accepted consultation<select id="doctorMessageConsult"><option value="">Choose an accepted consultation</option></select></label><div id="doctorMessageList" class="panel">Choose an accepted consultation.</div><label>Message<textarea id="doctorMessageText" maxlength="4000"></textarea></label><button id="doctorSendMessage" type="button">Send message</button><p id="doctorMessageStatus" role="status"></p></div>
+ <label>Notes<textarea id="doctorLabNotes" maxlength="2000"></textarea></label><label>Upload laboratory report (PDF only, max 10 MB)<input id="doctorLabFile" type="file" accept="application/pdf,.pdf"></label><button id="doctorSaveLab" type="button">Submit lab result</button><p id="doctorLabStatus" role="status"></p></div>
+ <div id="doctorCommsPanel" class="doctor-panel hidden"><h3>Consultations and communication</h3><div id="doctorConsultations" class="panel">Loading assigned requests…</div><div class="panel"><h4>Messages with a member</h4><label>Accepted consultation<select id="doctorMessageConsult"><option value="">Choose an accepted consultation</option></select></label><div id="doctorMessageList" class="panel">Choose an accepted consultation.</div><label>Message<textarea id="doctorMessageText" maxlength="4000"></textarea></label><button id="doctorSendMessage" type="button">Send message</button><p id="doctorMessageStatus" role="status"></p></div></div>
 </section>
 <section id="home" class="panel"><h2>Your health timeline</h2><p>Bring together longitudinal lifestyle and environmental context, laboratory and biomarker results, and next-step requests. Values remain recorded as entered, with no automated normal/abnormal or fertility interpretation.</p><div class="grid"><div class="panel">Lifestyle check-ins: <b id="hc">0</b></div><div class="panel">Biomarker records: <b id="bc">0</b></div><div class="panel">Other lab records: <b id="lc">0</b></div><div class="panel">Care requests: <b id="cc">0</b></div></div><div id="timeline"></div></section>
 <section id="habits" class="panel hidden"><h2>Lifestyle, sleep and environment</h2><div class="panel sleep-routine"><h3>Your usual sleep routine</h3><p class="small muted">Set this once. MENOVA will remember it for your next check-ins. You can change it whenever your routine changes.</p><div class="grid"><label>Usual bedtime<input id="usualBedtime" type="time"></label><label>Usual wake-up time<input id="usualWake" type="time"></label></div><button id="saveSleepRoutine" type="button">Save my usual routine</button><span id="sleepRoutineStatus" class="small" role="status"></span></div><p id="sleepCalcHelp" class="small muted">Your usual times prefill the check-in. Change them for a particular night; duration is calculated automatically.</p><div class="grid">
@@ -67,6 +65,8 @@ const today=new Date().toISOString().slice(0,10);['date','bdate','ldate'].forEac
 function msg(id,t,bad=false){$(id).textContent=t;$(id).classList.toggle('error',bad)}
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function tab(id){document.querySelectorAll('#app>section').forEach(s=>s.classList.toggle('hidden',s.id!==id&&!(id==='biomarkers'&&s.id==='labs')));document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));window.scrollTo(0,0)}
+function doctorTab(id){document.querySelectorAll('.doctor-panel').forEach(p=>p.classList.toggle('hidden',p.id!==id));document.querySelectorAll('[data-doctor-tab]').forEach(b=>b.classList.toggle('active',b.dataset.doctorTab===id));window.scrollTo(0,0)}
+document.querySelectorAll('[data-doctor-tab]').forEach(b=>b.addEventListener('click',()=>doctorTab(b.dataset.doctorTab)));
 document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>tab(b.dataset.tab)));
 function requireSession(){if(session)return true;$('app').classList.add('hidden');$('auth').classList.remove('hidden');msg('authState','No active MENOVA session. Sign in on the main page first.',true);return false}
 async function load(){
@@ -195,7 +195,7 @@ async function init(){
   $('accountLabel').textContent=(cp.data.display_name||'Doctor')+' · '+(cp.data.verification_status==='verified'?'Verified':'Self-reported prototype');
   $('memberTabs').classList.add('hidden');
   document.querySelectorAll('#app>section').forEach(s=>s.classList.add('hidden'));
-  $('clinicianDashboard').classList.remove('hidden');
+  $('clinicianDashboard').classList.remove('hidden');doctorTab('doctorRecordsPanel');
   $('doctorLabDate').value=today;
   await loadClinicianDashboard();
   return;
