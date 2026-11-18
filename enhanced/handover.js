@@ -11,7 +11,8 @@
    window.sb.from('health_assessments').select('*').eq('member_user_id',uid).order('created_at',{ascending:false}).limit(100),
    window.sb.from('diary_entries').select('*').eq('member_user_id',uid).order('created_at',{ascending:false}).limit(200),
    window.sb.from('health_handovers').select('id,clinician_user_id,consent_id,shared_snapshot,status,created_at').eq('member_user_id',uid).order('created_at',{ascending:false}).limit(100),
-   window.sb.from('clinician_profiles').select('user_id,display_name,specialty,verification_status').in('verification_status',['verified','self_reported']).order('display_name'),\n   window.sb.from('ai_insights').select('insight_text,insight_type,model_name,created_at').eq('member_user_id',uid).order('created_at',{ascending:false}).limit(30)
+   window.sb.from('clinician_profiles').select('user_id,display_name,specialty,verification_status').in('verification_status',['verified','self_reported']).order('display_name'),
+   window.sb.from('ai_insights').select('insight_text,insight_type,model_name,created_at').eq('member_user_id',uid).order('created_at',{ascending:false}).limit(30)
   ]);
   const bad=q.find(x=>x.error);if(bad){$('hoStatus').textContent='Could not load handover records: '+bad.error.message;return}
   assessments=q[0].data||[];diaryEntries=q[1].data||[];handovers=q[2].data||[];
