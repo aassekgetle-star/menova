@@ -162,10 +162,10 @@ async function submitClinicianLab(){
  if(file&&(file.type!=='application/pdf'||file.size>10485760))return msg('doctorLabStatus','Upload a PDF file no larger than 10 MB.',true);
  const recordId=crypto.randomUUID(),path=file?'clinician-lab/'+memberId+'/'+handoverId+'/'+recordId+'.pdf':null;
  if(file){const up=await sb.storage.from('menova-private-reports').upload(path,file,{upsert:false,contentType:'application/pdf'});if(up.error)return msg('doctorLabStatus','PDF upload failed: '+up.error.message,true)}
- const row={id:recordId,handover_id:handoverId,member_user_id:memberId,clinician_user_id:session.user.id,test_name:test,test_date:date,facility:$('doctorLabFacility').value.trim()||null,parameter:marker,result_value:value||null,unit:$('doctorLabUnit').value.trim()||null,reference_interval:$('doctorLabRange').value.trim()||null,notes:$('doctorLabNotes').value.trim()||null,report_storage_path:path};
+ const row={id:recordId,handover_id:handoverId,member_user_id:memberId,clinician_user_id:session.user.id,test_name:test,test_date:date,facility:$('doctorLabFacility').value.trim()||null,parameter:marker,result_value:value||null,specimen_type:$('doctorLabSpecimen').value.trim()||null,unit:$('doctorLabUnit').value.trim()||null,reference_interval:$('doctorLabRange').value.trim()||null,notes:$('doctorLabNotes').value.trim()||null,report_storage_path:path};
  const {error}=await sb.from('clinician_lab_records').insert(row);
  if(error){if(path)await sb.storage.from('menova-private-reports').remove([path]);return msg('doctorLabStatus','Result could not be saved: '+error.message,true)}
- ['doctorLabTest','doctorLabMarker','doctorLabValue','doctorLabUnit','doctorLabRange','doctorLabFacility','doctorLabNotes'].forEach(id=>$(id).value='');$('doctorLabFile').value='';$('doctorLabDate').value=today;
+ ['doctorLabTest','doctorLabMarker','doctorLabSpecimen','doctorLabValue','doctorLabUnit','doctorLabRange','doctorLabFacility','doctorLabNotes'].forEach(id=>$(id).value='');$('doctorLabFile').value='';$('doctorLabDate').value=today;
  msg('doctorLabStatus','Laboratory result saved as a separate clinician-authored record. Member information was not changed.');await loadClinicianDashboard();
 }
 async function loadDoctorMessages(){
