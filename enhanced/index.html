@@ -50,7 +50,7 @@ let session=null,habits=[],biomarkers=[],labs=[],consults=[],referrals=[],clinic
 const today=new Date().toISOString().slice(0,10);['date','bdate','ldate'].forEach(id=>$(id).value=today);
 function msg(id,t,bad=false){$(id).textContent=t;$(id).classList.toggle('error',bad)}
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function tab(id){document.querySelectorAll('#app>section').forEach(s=>s.classList.toggle('hidden',s.id!==id));document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));window.scrollTo(0,0)}
+function tab(id){document.querySelectorAll('#app>section').forEach(s=>s.classList.toggle('hidden',s.id!==id&&!(id==='biomarkers'&&s.id==='labs')));document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));window.scrollTo(0,0)}
 document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>tab(b.dataset.tab)));
 function requireSession(){if(session)return true;$('app').classList.add('hidden');$('auth').classList.remove('hidden');msg('authState','No active MENOVA session. Sign in on the main page first.',true);return false}
 async function load(){
