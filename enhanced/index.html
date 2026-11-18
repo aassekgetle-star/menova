@@ -245,33 +245,49 @@ async function switchWorkspace(mode){
   tab('home');
  }
 }
+let menovaInitPromise=null;
 async function init(){
- const {data,error}=await sb.auth.getSession();if(error)return msg('authState',error.message,true);
- session=data.session;window.session=session;window.sb=sb;window.esc=esc;if(!session)return requireSession();
- const cp=await sb.from('clinician_profiles').select('user_id,display_name,verification_status,specialty').eq('user_id',session.user.id).maybeSingle();
- if(cp.error)return msg('authState','Could not check account type: '+cp.error.message,true);
- isVerifiedClinician=!!cp.data&&['verified','self_reported'].includes(cp.data.verification_status);
- $('auth').classList.add('hidden');$('app').classList.remove('hidden');
- if(isVerifiedClinician){
-  $('accountLabel').textContent=(cp.data.display_name||'Doctor')+' · '+(cp.data.verification_status==='verified'?'Verified':'Self-reported prototype');
-  $('workspaceSwitch').classList.remove('hidden');
-  $('workspaceSwitch').onclick=()=>switchWorkspace(activeWorkspace==='clinician'?'member':'clinician');
-  $('doctorLabDate').value=today;
-  await switchWorkspace('clinician');
-  return;
- }
- $('workspaceSwitch').classList.add('hidden');
- $('workspaceMode').textContent='Personal member workspace';
- $('accountLabel').textContent='Your private MENOVA account';
- $('clinicianDashboard').classList.add('hidden');
- $('memberTabs').classList.remove('hidden');
- tab('home');
- await load();
+ if(menovaInitPromise)return menovaInitPromise;
+ menovaInitPromise=(async()=>{
+  const {data,error}=await sb.auth.getSession();
+  if(error){msg('authState',error.message,true);return}
+  session=data.session;window.session=session;window.sb=sb;window.esc=esc;
+  if(!session){requireSession();return}
+  const uid=session.user.id;
+  const cp=await sb.from('clinician_profiles').select('user_id,display_name,verification_status,specialty').eq('user_id',uid).maybeSingle();
+  if(cp.error){msg('authState','Could not check account type: '+cp.error.message,true);return}
+  isVerifiedClinician=!!cp.data&&['verified','self_reported'].includes(cp.data.verification_status);
+  $('auth').classList.add('hidden');$('app').classList.remove('hidden');
+  if(isVerifiedClinician){
+   $('accountLabel').textContent=(cp.data.display_name||'Doctor')+' · '+(cp.data.verification_status==='verified'?'Verified':'Self-reported prototype');
+   $('workspaceSwitch').classList.remove('hidden');
+   $('workspaceSwitch').onclick=()=>switchWorkspace(activeWorkspace==='clinician'?'member':'clinician');
+   $('doctorLabDate').value=today;await switchWorkspace('clinician');return;
+  }
+  // Ensure every authenticated member account has its own profile row, including
+  // accounts that arrive here without the landing page's profile-setup step.
+  const existing=await sb.from('member_profiles').select('user_id').eq('user_id',uid).maybeSingle();
+  if(existing.error){msg('authState','Could not load your member profile: '+existing.error.message,true);return}
+  if(!existing.data){
+   const md=session.user.user_metadata||{},profile={user_id:uid};
+   if(md.display_name)profile.display_name=md.display_name;
+   if(md.date_of_birth)profile.date_of_birth=md.date_of_birth;
+   const created=await sb.from('member_profiles').insert(profile).select('user_id').single();
+   if(created.error){msg('authState','Your member profile could not be created: '+created.error.message,true);return}
+  }
+  $('workspaceSwitch').classList.add('hidden');$('workspaceMode').textContent='Personal member workspace';
+  $('accountLabel').textContent='Your private MENOVA account';$('clinicianDashboard').classList.add('hidden');
+  $('memberTabs').classList.remove('hidden');tab('home');await load();
+ })();
+ try{return await menovaInitPromise}finally{menovaInitPromise=null}
 }
 $('saveHabit').onclick=saveHabit;$('saveSleepRoutine').onclick=saveSleepRoutine;$('sleepStart').addEventListener('change',calculateSleepDuration);$('sleepEnd').addEventListener('change',calculateSleepDuration);$('saveBio').onclick=saveBio;$('saveLab').onclick=saveLab;$('saveConsult').onclick=saveConsult;$('saveReferral').onclick=saveReferral;$('refreshBtn').onclick=()=>isVerifiedClinician?loadClinicianDashboard():load();$('generateInsights').onclick=generateInsights;$('messageConsult').onchange=loadMessages;$('clinicianMessageConsult').onchange=loadClinicianMessages;$('clinicianSendMessage').onclick=sendClinicianMessage;$('sendMessage').onclick=sendMessage;$('exportBtn').onclick=exportData;$('deleteBtn').onclick=deleteAll;
 $('doctorSaveLab').onclick=submitClinicianLab;$('doctorMessageConsult').onchange=loadDoctorMessages;$('doctorSendMessage').onclick=sendDoctorMessage;
 $('enhancedSignOut').onclick=async()=>{await sb.auth.signOut();window.location.assign('../')};
-sb.auth.onAuthStateChange((event,next)=>{if(event==='SIGNED_OUT'){session=null;requireSession()}else if(next){session=next;init()}});init();
+sb.auth.onAuthStateChange((event,next)=>{
+ if(event==='SIGNED_OUT'){session=null;window.session=null;requireSession();return}
+ if(next){session=next;window.session=next;if(event==='SIGNED_IN')init()}
+});init();
 </script><script src="./handover.js"></script><script>
 /* MENOVA on-device AI: model inference runs in the browser; no prompt is sent to an AI server. */
 (function(){
