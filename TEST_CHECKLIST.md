@@ -1,16 +1,26 @@
 # MENOVA test checklist
 
-- [ ] Desktop and mobile layout.
-- [ ] Navigate all six sections.
-- [ ] Submit a fictional diary entry and confirm timeline updates.
-- [ ] Complete the reproductive intake and inspect explanations and suggested route.
-- [ ] Run all five synthetic cases.
-- [ ] Sudden severe testicular pain scenario directs to immediate emergency assessment.
-- [ ] Handover preview includes only selected information.
-- [ ] Approval checkbox is required before clinician view is populated.
-- [ ] Refresh and verify local demo persistence.
+## Static / data checks
+- [ ] JavaScript syntax check for root and enhanced pages.
+- [ ] Desktop and mobile layout, including narrow-screen forms.
+- [ ] Sign in with an existing MENOVA account; signed-out users cannot access the enhanced data view.
+- [ ] Lifestyle check-in validates dates and numeric bounds; all additional lifestyle fields persist.
+- [ ] Biomarker record persists specimen, result, unit, lab interval and lab identity exactly as entered.
+- [ ] Existing lab record form still saves.
+- [ ] Consultation and referral requests save as simulated drafts and explicitly state no provider is contacted.
+- [ ] Timeline sorts entries chronologically.
+- [ ] Biomarker history groups only matching parameter/unit labels and does not infer normality or causation.
+- [ ] JSON export contains lifestyle, biomarker, lab and care-request records.
+- [ ] Individual and bulk deletion remove only the signed-in member's records.
+- [ ] Two-account RLS isolation test: account A cannot read, update or delete account B's rows.
+- [ ] Sign-out immediately hides member records.
 
-Only static JavaScript syntax validation has been performed in the initial development pass. This checklist is not evidence that every browser interaction has been tested. No clinical validation or security certification has been performed. Synthetic data only.
-- [ ] Add check-ins with dates entered out of order and confirm trends compare the earliest and latest dates chronologically.
-- [ ] Export JSON and confirm the downloaded file contains both lifestyle and lab records.
-- [ ] Delete demo records and confirm counts return to zero after refresh.
+## Clinical / product safety
+- [ ] Sudden severe testicular pain route in the main prototype directs immediately to emergency care.
+- [ ] No diagnosis, fertility prediction, unvalidated risk score or normal/abnormal lab classification.
+- [ ] AI endpoint remains disabled until provider credentials, safety evaluation and clinical review are completed.
+- [ ] Consultation and referral flows are clearly marked demo-only until provider network and scheduling integrations are operational.
+- [ ] Secure biomarker report upload is not advertised as available.
+
+## Test evidence status
+The enhanced page JavaScript syntax was checked after this update. Database migration application and schema/policy checks are performed separately. Browser interaction, real member-session CRUD, two-account isolation, mobile-device testing, clinical validation, AI evaluation, teleconsultation and referral delivery have not been demonstrated by this checklist. Synthetic data only.
