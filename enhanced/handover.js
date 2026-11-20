@@ -14,9 +14,9 @@
    window.sb.from('clinician_profiles').select('user_id,display_name,specialty,verification_status').in('verification_status',['verified','self_reported']).order('display_name'),
    window.sb.from('ai_insights').select('insight_text,insight_type,model_name,created_at').eq('member_user_id',uid).order('created_at',{ascending:false}).limit(30)
   ]);
-  const bad=q.find(x=>x.error);if(bad){$('hoStatus').textContent='Could not load handover records: '+bad.error.message;return}
+  const bad=q.find(x=>x.error);if(bad)$('hoStatus').textContent='Some records could not be loaded: '+bad.error.message;
   assessments=q[0].data||[];diaryEntries=q[1].data||[];handovers=q[2].data||[];
-  window.handoverClinicians=q[3].data||[];insightRecords=q[4].data||[];
+  window.handoverClinicians=(q[3].data||[]).filter(c=>c.user_id!==uid);insightRecords=q[4].data||[];
   $('hoClinician').innerHTML='<option value="">Select a clinician</option>'+window.handoverClinicians.map(c=>'<option value="'+c.user_id+'">'+window.esc(c.display_name)+' · '+window.esc(c.specialty||'Clinician')+' · '+(c.verification_status==='verified'?'Verified':'Self-reported prototype')+'</option>').join('');
   renderHandovers();
  }
@@ -42,7 +42,7 @@
   const selected={sections:Object.keys(previewSnapshot),clinician_user_id:clinician};
   const {data:consent,error:ce}=await window.sb.from('sharing_consents').insert({member_user_id:window.session.user.id,purpose:'Member-approved MENOVA health handover',selected_sections:selected,approved_snapshot:previewSnapshot}).select().single();
   if(ce){$('hoStatus').textContent='Consent could not be saved: '+ce.message;return}
-  const snapshot={...previewSnapshot,member_message:$('hoMessage').value,approved_at:consent.approved_at};
+  const snapshot={...previewSnapshot,member_message:$('hoMessage').value,member_name:window.session.user.user_metadata?.display_name||null,approved_at:consent.approved_at};
   const {data:row,error}=await window.sb.from('health_handovers').insert({member_user_id:window.session.user.id,clinician_user_id:clinician,consent_id:consent.id,shared_snapshot:snapshot,status:'approved_for_sharing',is_simulated:true}).select().single();
   if(error){await window.sb.from('sharing_consents').update({revoked_at:new Date().toISOString()}).eq('id',consent.id);$('hoStatus').textContent='Handover failed; consent was closed: '+error.message;return}
   handovers.unshift(row);renderHandovers();$('hoStatus').textContent='Approved snapshot shared with the selected clinician.';
@@ -65,15 +65,16 @@ function reportValue(v){
  if(typeof v==='object')return '<dl>'+Object.entries(v).map(([k,x])=>'<div><dt>'+reportEscape(k.replaceAll('_',' '))+'</dt><dd>'+reportValue(x)+'</dd></div>').join('')+'</dl>';
  return reportEscape(v);
 }
-function downloadFormattedHandover(snapshot,createdAt,clinicianName){
- const sections=Object.entries(snapshot||{}).filter(([k])=>!['member_message','approved_at'].includes(k)).map(([k,v])=>'<section><h2>'+reportEscape(k.replaceAll('_',' '))+'</h2>'+reportValue(v)+'</section>').join('');
+function downloadFormattedHandover(snapshot,createdAt,clinicianName,asPdf){
+ const sections=Object.entries(snapshot||{}).filter(([k])=>!['member_message','approved_at','member_name'].includes(k)).map(([k,v])=>'<section><h2>'+reportEscape(k.replaceAll('_',' '))+'</h2>'+reportValue(v)+'</section>').join('');
  const html='<!doctype html><html><head><meta charset="utf-8"><title>MENOVA member-approved health handover</title><style>body{font:15px/1.5 Arial,sans-serif;color:#202433;max-width:1000px;margin:36px auto;padding:0 24px}header{border-bottom:3px solid #7651b5;padding-bottom:18px}h1{font-size:25px;margin:0}h2{font-size:18px;text-transform:capitalize;color:#514078}section{margin:22px 0;padding:16px;border:1px solid #ddd;border-radius:10px;break-inside:avoid}dl>div{display:grid;grid-template-columns:220px 1fr;gap:14px;padding:7px 0;border-bottom:1px solid #eee}dt{font-weight:bold;text-transform:capitalize}dd{margin:0;white-space:pre-wrap}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #ddd;padding:7px;text-align:left;vertical-align:top}th{text-transform:capitalize;background:#f4f1f8}.muted{color:#777}.message{background:#f8f6fb;padding:12px;border-radius:8px}@media print{body{margin:0;max-width:none}section{break-inside:avoid}}</style></head><body><header><h1>MENOVA · Member-approved health handover</h1><p>Prepared '+reportEscape(new Date(createdAt||Date.now()).toLocaleString())+'</p><p>Selected clinician: '+reportEscape(clinicianName||'Assigned clinician')+'</p></header><p class="message"><b>Member message:</b> '+reportEscape(snapshot?.member_message||'No accompanying message')+'</p>'+sections+'<footer><p class="muted">This report reproduces information selected and approved by the member. It is not a diagnosis or clinical interpretation. Verify source documents and laboratory context during care.</p></footer></body></html>';
+ if(asPdf){const w=window.open('','_blank');if(!w){alert('Allow pop-ups to save as PDF.');return}w.document.write(html);w.document.close();w.focus();setTimeout(()=>w.print(),400);return}
  const blob=new Blob([html],{type:'text/html;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='MENOVA-health-handover-'+new Date(createdAt||Date.now()).toISOString().slice(0,10)+'.html';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
 }
-window.menovaDownloadHandover=downloadFormattedHandover;
+window.menovaDownloadHandover=function(s,c,n){const pdf=!!window.__menovaPdf;window.__menovaPdf=false;return downloadFormattedHandover(s,c,n,pdf)};
  function renderHandovers(){
   $('hoMemberList').innerHTML=handovers.map(h=>'<div class="item"><b>'+window.esc(new Date(h.created_at).toLocaleString())+' · '+window.esc(h.status)+'</b><p>Clinician: '+window.esc((window.handoverClinicians||[]).find(c=>c.user_id===h.clinician_user_id)?.display_name||'Assigned clinician')+'</p><button type="button" data-ho-download="'+h.id+'">Download readable handover report</button>'+(h.status!=='revoked'?'<button data-ho-revoke="'+h.consent_id+'" data-ho-id="'+h.id+'">Revoke access</button>':'')+'</div>').join('')||'<p class="muted">No handovers recorded.</p>';
-  document.querySelectorAll('[data-ho-revoke]').forEach(b=>b.onclick=()=>revoke(b.dataset.hoRevoke,b.dataset.hoId));document.querySelectorAll('[data-ho-download]').forEach(b=>b.onclick=()=>{const item=handovers.find(x=>x.id===b.dataset.hoDownload);if(item)downloadFormattedHandover(item.shared_snapshot,item.created_at,(window.handoverClinicians||[]).find(c=>c.user_id===item.clinician_user_id)?.display_name)});
+  document.querySelectorAll('[data-ho-revoke]').forEach(b=>b.onclick=()=>revoke(b.dataset.hoRevoke,b.dataset.hoId));document.querySelectorAll('[data-ho-download]').forEach(b=>b.onclick=()=>{const item=handovers.find(x=>x.id===b.dataset.hoDownload);if(item)window.menovaDownloadHandover(item.shared_snapshot,item.created_at,(window.handoverClinicians||[]).find(c=>c.user_id===item.clinician_user_id)?.display_name)});
  }
  function renderCharts(){
   const host=$('wellnessCharts');if(!host||!window.habits)return;
