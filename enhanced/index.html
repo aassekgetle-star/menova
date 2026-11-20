@@ -292,8 +292,8 @@ $('saveHabit').onclick=saveHabit;$('saveSleepRoutine').onclick=saveSleepRoutine;
 $('doctorSaveLab').onclick=submitClinicianLab;$('doctorMessageConsult').onchange=loadDoctorMessages;$('doctorSendMessage').onclick=sendDoctorMessage;
 $('enhancedSignOut').onclick=async()=>{await sb.auth.signOut();window.location.assign('../')};
 sb.auth.onAuthStateChange((event,next)=>{
- if(event==='SIGNED_OUT'){session=null;window.session=null;requireSession();return}
- if(next){session=next;window.session=next;if(event==='SIGNED_IN')init()}
+ if(event==='SIGNED_OUT'){menovaInitPromise=null;session=null;window.session=null;requireSession();return}
+ if(next){session=next;window.session=next;if(event==='SIGNED_IN'){menovaInitPromise=null;init()}}
 });init();
 </script><script src="./handover.js"></script><script>
 /* MENOVA on-device AI: model inference runs in the browser; no prompt is sent to an AI server. */
